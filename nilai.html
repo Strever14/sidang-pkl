@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Input Nilai</title>
+  <style>
+     * { box-sizing: border-box; }
+     body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+     .container { width: 100%; max-width: 420px; margin: 40px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+     h2 { text-align: center; margin-bottom: 10px; }
+
+     /* Area Info & Link */
+     #info { background: #e9ecef; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 10px; color: #333; }
+     #ppt-box { text-align: center; margin-bottom: 20px; }
+     #ppt-link { 
+       display: inline-block;
+       color: #2d89ef; 
+       text-decoration: none; 
+       font-weight: bold; 
+       font-size: 14px; 
+       border: 1px solid #2d89ef; 
+       padding: 5px 15px; 
+       border-radius: 20px; 
+       transition: 0.2s; 
+     }
+     #ppt-link:hover { background: #2d89ef; color: white; }
+     #ppt-link.disabled { color: #999; border-color: #999; cursor: not-allowed; }
+
+     /* Form Styling */
+     label { display: block; margin-top: 10px; font-size: 13px; color: #666; }
+     input, select { width: 100%; padding: 12px; margin: 5px 0 15px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
+     button { width: 100%; padding: 14px; background: #2d89ef; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; }
+     button:disabled { background: #999; cursor: not-allowed; }
+   </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Form Penilaian</h2>
+  <div id="info">Memuat data siswa...</div>
+  
+  <div id="ppt-box">
+    <a id="ppt-link" href="#" target="_blank">📂 Buka Link PPT / Materi</a>
+  </div>
+
+  <form id="form-penilaian">
+    <input type="hidden" name="sheetName" value="NILAI">
+    <input type="hidden" name="nama penguji" id="in_penguji">
+    <input type="hidden" name="no peserta" id="in_no">
+    <input type="hidden" name="peserta" id="in_peserta">
+    <input type="hidden" name="kelas" id="in_kelas">
+
+    <label>Nilai Laporan:</label>
+    <input name="n1" type="number" required>
+    
+    <label>Nilai Presentasi:</label>
+    <input name="n2" type="number" required>
+    
+    <label>Nilai Penyampaian Materi:</label>
+    <input name="n3" type="number" required>
+
+    <label>Nilai Tanya Jawab:</label>
+    <input name="n4" type="number" required>
+
+    <label>Nilai Penampilan:</label>
+    <input name="n5" type="number" required>
+
+    <label>Keterangan:</label>
+    <select name="keterangan" required>
+      <option value="">- Pilih Status -</option>
+      <option value="Lulus">Lulus</option>
+      <option value="Sidang Ulang">Sidang Ulang</option>
+      <option value="Revisi Laporan">Revisi Laporan</option>
+    </select>
+
+    <button type="submit" id="btn-submit">Simpan ke Spreadsheet</button>
+  </form>
+</div>
+
+<script>
+  // URL Web App dari Google Apps Script
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx95jnAbHKIOhK0rsA5AWVLA-4QHRoqitdP1YE2Brs0x75g40QQ0LHx7oA4gL_1gfASoQ/exec";
+
+  const guru = localStorage.getItem("guru");
+  const siswa = JSON.parse(localStorage.getItem("siswa"));
+
+if (siswa) {
+    document.getElementById("info").innerText = "Siswa: " + siswa.nama;
+    
+    // Sinkronkan input hidden
+    document.getElementById("in_penguji").value = localStorage.getItem("guru") || "Penguji";
+    document.getElementById("in_no").value = siswa.no_peserta || "0";
+    document.getElementById("in_peserta").value = siswa.nama;
+    document.getElementById("in_kelas").value = siswa.kelas;
+
+    // LOGIKA LINK PPT (PERBAIKAN DI SINI)
+    const pptLink = document.getElementById("ppt-link");
+    
+    // Cek apakah siswa.link ada stands dan bukan strip (-)
+    if (siswa.link && siswa.link !== "-" && siswa.link.trim() !== "") {
+      pptLink.href = siswa.link;
+      pptLink.innerText = "📂 Buka Link PPT / Materi";
+      pptLink.classList.remove("disabled");
+      pptLink.style.pointerEvents = "auto";
+      pptLink.style.opacity = "1";
+    } else {
+      pptLink.innerText = "📂 Materi Tidak Tersedia";
+      pptLink.classList.add("disabled");
+      pptLink.style.pointerEvents = "none"; // Membuat link tidak bisa diklik
+      pptLink.style.opacity = "0.5";       // Membuat tampilan agak transparan
+    }
+}
+  const form = document.getElementById('form-penilaian');
+  const btn = document.getElementById('btn-submit');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.innerText = "Proses Mengirim...";
+
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      body: new FormData(form)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.result === "success") {
+        alert("Berhasil! Data " + siswa.nama + " masuk di baris ke-" + data.row);
+        localStorage.removeItem("siswa");
+        window.location.href = "pilih.html";
+      } else {
+        alert("Gagal: " + data.error);
+        btn.disabled = false;
+        btn.innerText = "Simpan ke Spreadsheet";
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Terjadi kesalahan koneksi. Silakan cek Spreadsheet Anda.");
+      btn.disabled = false;
+      btn.innerText = "Simpan ke Spreadsheet";
+    });
+  });
+</script>
+
+</body>
+</html>

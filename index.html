@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Penilaian Sidang</title>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f4f6f9;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* CONTAINER */
+.container {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* HEADER & DESKRIPSI */
+.header-section {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 24px;
+}
+
+.description {
+  color: #7f8c8d;
+  font-size: 14px;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+/* INPUT & SELECT */
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #34495e;
+}
+
+select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  border: 1px solid #dcdde1;
+  font-size: 14px;
+  background-color: #fff;
+  transition: border 0.3s;
+}
+
+select:focus {
+  border-color: #2d89ef;
+  outline: none;
+}
+
+/* BUTTON */
+button {
+  width: 100%;
+  padding: 14px;
+  background: #2d89ef;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #1b5fbf;
+}
+
+/* FOOTER */
+.footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 12px;
+  color: #bdc3c7;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div class="header-section">
+    <h2>Sistem Penilaian</h2>
+    <p class="description">
+      Selamat datang di Portal Penilaian Sidang. <br>
+      Silakan pilih nama Anda pada daftar penguji di bawah untuk memulai proses penilaian siswa.
+    </p>
+  </div>
+
+  <label for="guru">Nama Penguji</label>
+  <select id="guru"></select>
+  
+  <button onclick="login()">Masuk ke Sistem</button>
+
+  <div class="footer">
+    &copy; 2026 - Manajemen Penilaian Internal
+  </div>
+</div>
+
+<script>
+const API_KEY = "AIzaSyBhLPNX7e0sA8VIy_jlvBKzl1qHYURHDnY";
+const SHEET_ID = "1V6RrI1uPQ7s8udusfBe0ynEe5MzOHjHS7gWuZUMP55I";
+
+async function loadPenguji() {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/daftarPenguji!A2:B13?key=${API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const select = document.getElementById("guru");
+    select.innerHTML = "<option value=''>-- Pilih Nama Anda --</option>";
+
+    if (data.values) {
+      data.values.forEach(row => {
+        select.innerHTML += `<option value="${row[1]}">${row[1]}</option>`;
+      });
+    }
+  } catch (error) {
+    console.error("Gagal memuat data penguji:", error);
+  }
+}
+
+function login() {
+  const guru = document.getElementById("guru").value;
+  if (!guru) return alert("Pilih penguji terlebih dahulu!");
+
+  localStorage.setItem("guru", guru);
+  window.location.href = "pilih.html";
+}
+
+loadPenguji();
+</script>
+</body>
+</html>
