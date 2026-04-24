@@ -25,7 +25,7 @@
        transition: 0.2s; 
      }
      #ppt-link:hover { background: #2d89ef; color: white; }
-     #ppt-link.disabled { color: #999; border-color: #999; cursor: not-allowed; }
+     #ppt-link.disabled { color: #999; border-color: #999; cursor: not-allowed; opacity: 0.5; }
 
      /* Form Styling */
      label { display: block; margin-top: 10px; font-size: 13px; color: #666; }
@@ -39,8 +39,6 @@
 <div class="container">
   <h2>Form Penilaian</h2>
   <div id="info">Memuat data siswa...</div>
-
-  <br>
   
   <div id="ppt-box">
     <a id="ppt-link" href="#" target="_blank">📂 Buka Link PPT / Materi</a>
@@ -48,25 +46,23 @@
 
   <form id="form-penilaian">
     <input type="hidden" name="sheetName" value="NILAI">
-    <input type="hidden" name="nama penguji" id="in_penguji">
+    <input type="hidden" name="penguji 1" id="in_penguji1">
+    <input type="hidden" name="penguji 2" id="in_penguji2">
     <input type="hidden" name="no peserta" id="in_no">
     <input type="hidden" name="peserta" id="in_peserta">
     <input type="hidden" name="kelas" id="in_kelas">
 
-    <label>Nilai Laporan:</label>
-    <input name="n1" type="number" required>
+    <label>Nilai Laporan (N1) 20%":</label>
+    <input name="n1" type="number" placeholder="0-100" required>
     
-    <label>Nilai Presentasi:</label>
-    <input name="n2" type="number" required>
+    <label>Nilai Presentasi (N2) 30%:</label>
+    <input name="n2" type="number" placeholder="0-100" required>
     
-    <label>Nilai Penyampaian Materi:</label>
-    <input name="n3" type="number" required>
+    <label>Nilai Penguasaan Materi (N3) 40%:</label>
+    <input name="n3" type="number" placeholder="0-100" required>
 
-    <label>Nilai Tanya Jawab:</label>
-    <input name="n4" type="number" required>
-
-    <label>Nilai Penampilan:</label>
-    <input name="n5" type="number" required>
+    <label>Nilai Penampilan (N4) 10%:</label>
+    <input name="n4" type="number" placeholder="0-100">
 
     <label>Keterangan:</label>
     <select name="keterangan" required>
@@ -81,38 +77,36 @@
 </div>
 
 <script>
-  // URL Web App dari Google Apps Script
+  // URL Web App Google Apps Script
   const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx95jnAbHKIOhK0rsA5AWVLA-4QHRoqitdP1YE2Brs0x75g40QQ0LHx7oA4gL_1gfASoQ/exec";
 
-  const guru = localStorage.getItem("guru");
+  // Ambil data penguji dan siswa dari localStorage
+  const guru1 = localStorage.getItem("guru1");
+  const guru2 = localStorage.getItem("guru2");
   const siswa = JSON.parse(localStorage.getItem("siswa"));
 
-if (siswa) {
-    document.getElementById("info").innerText = "Siswa: " + siswa.nama;
+  if (siswa) {
+    // Tampilkan info siswa di layar
+    document.getElementById("info").innerText = siswa.kelas + " - " + siswa.nama;
     
-    // Sinkronkan input hidden
-    document.getElementById("in_penguji").value = localStorage.getItem("guru") || "Penguji";
+    // Isi data ke input hidden (Sesuaikan ID dengan yang ada di HTML)
+    document.getElementById("in_penguji1").value = guru1 || "-";
+    document.getElementById("in_penguji2").value = guru2 || "-";
     document.getElementById("in_no").value = siswa.no_peserta || "0";
     document.getElementById("in_peserta").value = siswa.nama;
     document.getElementById("in_kelas").value = siswa.kelas;
 
-    // LOGIKA LINK PPT (PERBAIKAN DI SINI)
+    // Logika Link PPT
     const pptLink = document.getElementById("ppt-link");
-    
-    // Cek apakah siswa.link ada stands dan bukan strip (-)
     if (siswa.link && siswa.link !== "-" && siswa.link.trim() !== "") {
       pptLink.href = siswa.link;
-      pptLink.innerText = "📂 Buka Link PPT / Materi";
-      pptLink.classList.remove("disabled");
-      pptLink.style.pointerEvents = "auto";
-      pptLink.style.opacity = "1";
     } else {
       pptLink.innerText = "📂 Materi Tidak Tersedia";
       pptLink.classList.add("disabled");
-      pptLink.style.pointerEvents = "none"; // Membuat link tidak bisa diklik
-      pptLink.style.opacity = "0.5";       // Membuat tampilan agak transparan
+      pptLink.onclick = function(e) { e.preventDefault(); };
     }
-}
+  }
+
   const form = document.getElementById('form-penilaian');
   const btn = document.getElementById('btn-submit');
 
@@ -128,7 +122,8 @@ if (siswa) {
     .then(res => res.json())
     .then(data => {
       if(data.result === "success") {
-        alert("Berhasil! Data " + siswa.nama + " masuk di baris ke-" + data.row);
+        alert("Berhasil disimpan!");
+        // Bersihkan data siswa setelah submit sukses
         localStorage.removeItem("siswa");
         window.location.href = "pilih.html";
       } else {
@@ -139,7 +134,7 @@ if (siswa) {
     })
     .catch(err => {
       console.error(err);
-      alert("Terjadi kesalahan koneksi. Silakan cek Spreadsheet Anda.");
+      alert("Terjadi kesalahan koneksi. Data mungkin tetap terkirim, silakan cek Spreadsheet.");
       btn.disabled = false;
       btn.innerText = "Simpan ke Spreadsheet";
     });
